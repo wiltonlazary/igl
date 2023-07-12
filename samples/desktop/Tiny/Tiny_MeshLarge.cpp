@@ -1492,13 +1492,12 @@ void createRenderPipelines() {
                                                                    nullptr);
 // @fb-only
 #if USE_OPENGL_BACKEND
-    size_t bindingPoint = 0;
     desc.uniformBlockBindingMap.emplace(
-        bindingPoint++, std::make_pair(IGL_NAMEHANDLE("MeshFrameUniforms"), igl::NameHandle{}));
+        0, std::make_pair(IGL_NAMEHANDLE("MeshFrameUniforms"), igl::NameHandle{}));
     desc.uniformBlockBindingMap.emplace(
-        bindingPoint++, std::make_pair(IGL_NAMEHANDLE("MeshObjectUniforms"), igl::NameHandle{}));
+        1, std::make_pair(IGL_NAMEHANDLE("MeshObjectUniforms"), igl::NameHandle{}));
     desc.uniformBlockBindingMap.emplace(
-        bindingPoint++, std::make_pair(IGL_NAMEHANDLE("MeshMaterials"), igl::NameHandle{}));
+        2, std::make_pair(IGL_NAMEHANDLE("MeshMaterials"), igl::NameHandle{}));
 #endif
     desc.cullMode = igl::CullMode::Back;
     desc.frontFaceWinding = igl::WindingMode::CounterClockwise;
@@ -1519,6 +1518,12 @@ void createRenderPipelines() {
     kCodeVS_Wireframe = vsCodeWireframe.c_str();
     const std::string fsCodeWireframe = std::string("#version 460") + kCodeFS_Wireframe;
     kCodeFS_Wireframe = fsCodeWireframe.c_str();
+    desc.fragmentUnitSamplerMap.clear();
+    desc.uniformBlockBindingMap.clear();
+    desc.uniformBlockBindingMap.emplace(
+        0, std::make_pair(IGL_NAMEHANDLE("MeshFrameUniforms"), igl::NameHandle{}));
+    desc.uniformBlockBindingMap.emplace(
+        1, std::make_pair(IGL_NAMEHANDLE("MeshObjectUniforms"), igl::NameHandle{}));
 #endif
     desc.shaderStages =
         ShaderStagesCreator::fromModuleStringInput(*device_,
@@ -2034,8 +2039,8 @@ void render(const std::shared_ptr<ITexture>& nativeDrawable, uint32_t frameIndex
     auto commands = buffer->createComputeCommandEncoder();
     commands->bindComputePipelineState(computePipelineState_Grayscale_);
     commands->bindTexture(0,
-                          kNumSamplesMSAA > 1 ? fbOffscreen_->getResolveColorAttachment(0)
-                                              : fbOffscreen_->getColorAttachment(0));
+                          kNumSamplesMSAA > 1 ? fbOffscreen_->getResolveColorAttachment(0).get()
+                                              : fbOffscreen_->getColorAttachment(0).get());
     commands->dispatchThreadGroups(igl::Dimensions(width_, height_, 1), igl::Dimensions());
     commands->endEncoding();
 
